@@ -426,6 +426,18 @@
                             <i class="fa-solid fa-caret-down text-xs"></i>
                         </div>
                     </div>
+                    <!-- Manage Categories (NEW) -->
+                    <div onclick="app.openCategoryModal()"
+                        class="flex justify-between items-center py-4 border-b border-navy-800 px-2 cursor-pointer hover:bg-navy-900 transition">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <span class="text-white">إدارة الأقسام</span>
+                        </div>
+                        <i class="fa-solid fa-angle-left text-gray-500"></i>
+                    </div>
                     <!-- Toggle Item -->
                     <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
                         <div class="flex items-center gap-4">
@@ -747,6 +759,83 @@
             <button onclick="app.addCategory()"
                 class="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition active:scale-95">
                 <i class="fa-solid fa-plus text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ADD CATEGORY MODAL (NEW) -->
+    <div id="modal-add-category" class="fixed inset-0 z-[120] hidden bg-navy-950 flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-navy-800 shrink-0">
+            <div class="w-10"></div>
+            <h2 class="text-white font-bold text-xl">إضافة قسم</h2>
+            <button onclick="app.closeModal('modal-add-category')"
+                class="text-gray-400 hover:text-white transition w-10 flex justify-end">
+                <i class="fa-solid fa-arrow-left text-xl"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+            <!-- Toggle Main/Sub -->
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-gray-300 font-bold">إضافة قسم رئيسي</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="cat-is-main-toggle" class="sr-only peer"
+                        onchange="app.toggleMainCategorySwitch()">
+                    <div
+                        class="w-11 h-6 bg-navy-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
+                    </div>
+                </label>
+            </div>
+
+            <!-- Parent Category Select (Hidden if Main) -->
+            <div id="parent-cat-container" class="space-y-2 opacity-50 pointer-events-none transition-opacity">
+                <label class="text-gray-400 text-sm">القسم الرئيسي</label>
+                <div class="relative">
+                    <select id="new-cat-parent"
+                        class="w-full bg-navy-900 text-white rounded-lg p-4 border border-navy-800 appearance-none focus:border-emerald-500 focus:outline-none text-right">
+                        <!-- Populated dynamic -->
+                    </select>
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <div class="w-8 h-8 rounded-full bg-navy-800 flex items-center justify-center">
+                            <i class="fa-solid fa-chevron-down text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Name Input -->
+            <div class="space-y-2">
+                <label class="text-gray-400 text-sm">إسم القسم</label>
+                <div class="relative">
+                    <input type="text" id="new-cat-name"
+                        class="w-full bg-navy-900 text-white rounded-lg p-4 border border-navy-800 focus:border-emerald-500 focus:outline-none text-right placeholder-gray-600"
+                        placeholder="أدخل اسم القسم">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2">
+                        <div
+                            class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 cursor-pointer hover:bg-emerald-500/30 transition">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predefined Icons/Colors (Simple Selection) -->
+            <div class="space-y-2">
+                <label class="text-gray-400 text-sm">أيقونة ولون</label>
+                <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar" id="new-cat-icons">
+                    <!-- Mock selection for updated UI later if needed -->
+                    <div
+                        class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 border border-emerald-500">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button onclick="app.saveNewCategory()"
+                class="w-full bg-rose-700 hover:bg-rose-600 text-white font-bold py-4 rounded-lg shadow-lg text-lg transition active:scale-[0.98] mt-8">
+                إضافة قسم
             </button>
         </div>
     </div>

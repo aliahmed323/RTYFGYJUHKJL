@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'masarif_pro_v3_ui';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
     // EXPENSE
     {
         id: 'food', type: 'expense', name: 'الغذاء', icon: 'fa-utensils', color: 'text-orange-500', bg: 'bg-orange-500/20',
@@ -47,6 +47,7 @@ const app = {
     state: {
         wallets: [],
         transactions: [],
+        categories: [],
         currency: 'IQD',
         txFilter: 'today',
         activeCatTab: 'expense'
@@ -69,7 +70,15 @@ const app = {
 
     loadData() {
         const d = localStorage.getItem(STORAGE_KEY);
-        if (d) this.state = { ...this.state, ...JSON.parse(d) };
+        if (d) {
+            const parsed = JSON.parse(d);
+            this.state = { ...this.state, ...parsed };
+        }
+        // Ensure categories are initialized
+        if (!this.state.categories || this.state.categories.length === 0) {
+            this.state.categories = DEFAULT_CATEGORIES;
+            this.saveData();
+        }
     },
     saveData() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
@@ -221,7 +230,7 @@ const app = {
         Object.values(grouped).forEach(group => {
             let itemsHtml = '';
             group.items.forEach(tx => {
-                const cat = CATEGORIES.find(c => c.id === tx.category) || CATEGORIES[0];
+                const cat = this.state.categories.find(c => c.id === tx.category) || this.state.categories[0];
                 const color = tx.amount < 0 ? 'text-rose-500' : 'text-emerald-500';
 
                 itemsHtml += `
@@ -309,7 +318,7 @@ const app = {
         const catList = document.getElementById('stats-categories-list');
         catList.innerHTML = '';
         Object.entries(catMap).sort((a, b) => b[1] - a[1]).forEach(([id, val]) => {
-            const cat = CATEGORIES.find(c => c.id === id);
+            const cat = this.state.categories.find(c => c.id === id);
             catList.innerHTML += `
                 <div class="flex items-center justify-between">
                      <p class="text-rose-500 font-bold dir-ltr">${val.toLocaleString()}</p>
@@ -393,7 +402,7 @@ const app = {
         const list = document.getElementById('categories-list');
         list.innerHTML = '';
 
-        const filtered = CATEGORIES.filter(c => c.type === type && c.name.toLowerCase().includes(query));
+        const filtered = this.state.categories.filter(c => c.type === type && c.name.toLowerCase().includes(query));
 
         if (filtered.length === 0) {
             list.innerHTML = '<div class="text-center py-10 text-gray-500">لا توجد نتائج</div>';
@@ -467,7 +476,7 @@ const app = {
     },
 
     selectCategory(catId, subId = null) {
-        const cat = CATEGORIES.find(c => c.id === catId);
+        const cat = this.state.categories.find(c => c.id === catId);
         if (!cat) return;
 
         let displayName = cat.name;
@@ -494,11 +503,72 @@ const app = {
         this.closeModal('modal-categories');
     },
 
-    addCategory() {
-        const name = prompt('أدخل اسم القسم الجديد:');
-        if (name) {
-            alert('خاصية إضافة الأقسام قيد التطوير حالياً، ولكن سيتم إضافتها قريباً!');
+    openAddCategoryModal() {
+        document.getElementById('modal-add-category').classList.remove('hidden');
+        this.toggleMainCategorySwitch(); // Reset state
+        document.getElementById('new-cat-name').value = '';
+    },
+
+    toggleMainCategorySwitch() {
+        const isMain = document.getElementById('cat-is-main-toggle').checked;
+        const parentContainer = document.getElementById('parent-cat-container');
+        if (isMain) {
+            parentContainer.classList.add('opacity-50', 'pointer-events-none');
+            document.getElementById('new-cat-parent').disabled = true;
+        } else {
+            parentContainer.classList.remove('opacity-50', 'pointer-events-none');
+            const parentSelect = document.getElementById('new-cat-parent');
+            parentSelect.disabled = false;
+
+            // Populate Parents (Current Type)
+            parentSelect.innerHTML = '';
+            const currents = this.state.categories.filter(c => c.type === this.state.activeCatTab);
+            currents.forEach(c => {
+                parentSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
         }
+    },
+
+    saveNewCategory() {
+        const name = document.getElementById('new-cat-name').value;
+        if (!name) return alert('أدخل اسم القسم');
+
+        const isMain = document.getElementById('cat-is-main-toggle').checked;
+        const type = this.state.activeCatTab;
+
+        // Icon/Color Randomizer for now (or basic selection)
+        const icons = ['fa-star', 'fa-heart', 'fa-circle', 'fa-square', 'fa-tag'];
+        const colors = ['text-emerald-500', 'text-rose-500', 'text-blue-500', 'text-purple-500', 'text-orange-500'];
+        const bgs = ['bg-emerald-500/20', 'bg-rose-500/20', 'bg-blue-500/20', 'bg-purple-500/20', 'bg-orange-500/20'];
+        const randIdx = Math.floor(Math.random() * icons.length);
+
+        if (isMain) {
+            const newCat = {
+                id: 'cat_' + Date.now(),
+                type: type,
+                name: name,
+                icon: icons[randIdx],
+                color: colors[randIdx],
+                bg: bgs[randIdx],
+                subcategories: []
+            };
+            this.state.categories.push(newCat);
+        } else {
+            const parentId = document.getElementById('new-cat-parent').value;
+            const parent = this.state.categories.find(c => c.id === parentId);
+            if (parent) {
+                if (!parent.subcategories) parent.subcategories = [];
+                parent.subcategories.push({
+                    id: 'sub_' + Date.now(),
+                    name: name,
+                    icon: icons[randIdx]
+                });
+            }
+        }
+
+        this.saveData();
+        this.closeModal('modal-add-category');
+        this.renderCategoriesList(type, '');
     },
 
     toggleTxCurrency() {
@@ -523,7 +593,8 @@ const app = {
         this.state.wallets.forEach(w => { ws.innerHTML += `<option value="${w.id}">${w.name}</option>`; });
 
         // Reset Category to default (First Expense)
-        const defaultCat = CATEGORIES[0];
+        // Reset Category to default (First Expense)
+        const defaultCat = this.state.categories[0];
         this.selectCategory(defaultCat.id);
 
         // Reset Fields
@@ -572,7 +643,7 @@ const app = {
         if (!catId) return alert('اختر القسم');
 
         // Determine sign based on category type
-        const catObj = CATEGORIES.find(c => c.id === catId);
+        const catObj = this.state.categories.find(c => c.id === catId);
         let finalAmount = -Math.abs(amount); // Default expense
         if (catObj && catObj.type === 'income') finalAmount = Math.abs(amount);
         // Debt logic - for simplicity treat paying debt as expense (-), receiving as income (+) per screenshot intent
