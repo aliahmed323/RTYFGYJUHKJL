@@ -1,12 +1,31 @@
 const STORAGE_KEY = 'masarif_pro_v3_ui';
 
 const CATEGORIES = [
-    { id: 'food', name: 'الغذاء', icon: 'fa-utensils', color: 'text-orange-400', bg: 'bg-orange-400/20' },
-    { id: 'bills', name: 'فواتير', icon: 'fa-file-invoice-dollar', color: 'text-blue-400', bg: 'bg-blue-400/20' },
-    { id: 'transport', name: 'نقل', icon: 'fa-car', color: 'text-yellow-400', bg: 'bg-yellow-400/20' },
-    { id: 'doctors', name: 'الأطباء', icon: 'fa-user-doctor', color: 'text-rose-400', bg: 'bg-rose-400/20' },
-    { id: 'shopping', name: 'تسوق', icon: 'fa-bag-shopping', color: 'text-purple-400', bg: 'bg-purple-400/20' },
-    { id: 'salary', name: 'الراتب', icon: 'fa-money-bill-wave', color: 'text-emerald-400', bg: 'bg-emerald-400/20' }
+    // EXPENSE
+    { id: 'food', type: 'expense', name: 'الغذاء', icon: 'fa-utensils', color: 'text-orange-500', bg: 'bg-orange-500/20' },
+    { id: 'transport', type: 'expense', name: 'المواصلات', icon: 'fa-car', color: 'text-blue-500', bg: 'bg-blue-500/20' },
+    { id: 'bills', type: 'expense', name: 'فواتير', icon: 'fa-file-invoice-dollar', color: 'text-rose-500', bg: 'bg-rose-500/20' },
+    { id: 'family', type: 'expense', name: 'الأسرة', icon: 'fa-house-user', color: 'text-purple-500', bg: 'bg-purple-500/20' },
+    { id: 'education', type: 'expense', name: 'التعليم', icon: 'fa-graduation-cap', color: 'text-yellow-500', bg: 'bg-yellow-500/20' },
+    { id: 'investment', type: 'expense', name: 'إستثمار', icon: 'fa-arrow-trend-up', color: 'text-emerald-500', bg: 'bg-emerald-500/20' },
+    { id: 'entertainment', type: 'expense', name: 'الترفيه', icon: 'fa-tv', color: 'text-pink-500', bg: 'bg-pink-500/20' },
+    { id: 'shopping', type: 'expense', name: 'تسوق', icon: 'fa-bag-shopping', color: 'text-indigo-500', bg: 'bg-indigo-500/20' },
+    { id: 'health', type: 'expense', name: 'الصحة', icon: 'fa-notes-medical', color: 'text-red-500', bg: 'bg-red-500/20' },
+    { id: 'travel', type: 'expense', name: 'السفر', icon: 'fa-plane', color: 'text-sky-500', bg: 'bg-sky-500/20' },
+    { id: 'withdraw', type: 'expense', name: 'سحب رصيد', icon: 'fa-money-bill-transfer', color: 'text-cyan-500', bg: 'bg-cyan-500/20' },
+
+    // INCOME
+    { id: 'salary', type: 'income', name: 'الراتب', icon: 'fa-money-bill-wave', color: 'text-emerald-500', bg: 'bg-emerald-500/20' },
+    { id: 'rewards', type: 'income', name: 'المكافآت', icon: 'fa-trophy', color: 'text-yellow-500', bg: 'bg-yellow-500/20' },
+    { id: 'gifts', type: 'income', name: 'الهدايا', icon: 'fa-gift', color: 'text-rose-500', bg: 'bg-rose-500/20' },
+    { id: 'sales', type: 'income', name: 'المبيعات', icon: 'fa-shop', color: 'text-blue-500', bg: 'bg-blue-500/20' },
+    { id: 'extra', type: 'income', name: 'الإضافي', icon: 'fa-wallet', color: 'text-purple-500', bg: 'bg-purple-500/20' },
+    { id: 'other_inc', type: 'income', name: 'أخرى', icon: 'fa-box-open', color: 'text-gray-400', bg: 'bg-gray-500/20' },
+    { id: 'add_bal', type: 'income', name: 'إضافة رصيد', icon: 'fa-circle-plus', color: 'text-emerald-400', bg: 'bg-emerald-400/20' },
+
+    // DEBT
+    { id: 'pay_debt', type: 'debt', name: 'دفع ديون وأقساط', icon: 'fa-hand-holding-dollar', color: 'text-orange-500', bg: 'bg-orange-500/20', desc: 'لاقراض جهة ما دين جديد او تسديد دين او اقساط عليك' },
+    { id: 'receive_debt', type: 'debt', name: 'استلام ديون وأقساط', icon: 'fa-hand-holding-hand', color: 'text-emerald-500', bg: 'bg-emerald-500/20', desc: 'لاستلام دين جديد او تحصيل دين او اقساط ما من جهة ما' }
 ];
 
 const app = {
@@ -14,7 +33,8 @@ const app = {
         wallets: [],
         transactions: [],
         currency: 'IQD',
-        txFilter: 'today'
+        txFilter: 'today',
+        activeCatTab: 'expense'
     },
 
     init() {
@@ -329,30 +349,115 @@ const app = {
         });
     },
 
+    // --- Category Modal Logic ---
+    openCategoryModal() {
+        document.getElementById('modal-categories').classList.remove('hidden');
+        this.switchCategoryTab('expense'); // Default to expense
+        document.getElementById('cat-search').value = '';
+    },
+
+    switchCategoryTab(type) {
+        this.state.activeCatTab = type;
+
+        ['expense', 'income', 'debt'].forEach(t => {
+            const btn = document.getElementById(`cat-tab-${t}`);
+            if (t === type) {
+                btn.classList.add('text-white', 'border-emerald-500');
+                btn.classList.remove('text-gray-400', 'border-transparent');
+            } else {
+                btn.classList.add('text-gray-400', 'border-transparent');
+                btn.classList.remove('text-white', 'border-emerald-500');
+            }
+        });
+
+        this.filterCategories();
+    },
+
+    filterCategories() {
+        const query = document.getElementById('cat-search').value.toLowerCase();
+        this.renderCategoriesList(this.state.activeCatTab, query);
+    },
+
+    renderCategoriesList(type, query = '') {
+        const list = document.getElementById('categories-list');
+        list.innerHTML = '';
+
+        const filtered = CATEGORIES.filter(c => c.type === type && c.name.toLowerCase().includes(query));
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<div class="text-center py-10 text-gray-500">لا توجد نتائج</div>';
+            return;
+        }
+
+        filtered.forEach(cat => {
+            const isDebt = type === 'debt';
+            const descHtml = cat.desc ? `<p class="text-gray-400 text-xs mt-1 leading-normal">${cat.desc}</p>` : '';
+
+            list.innerHTML += `
+                <div onclick="app.selectCategory('${cat.id}')" class="flex items-center justify-between p-3 bg-navy-900/50 rounded-xl border border-navy-800 cursor-pointer hover:bg-navy-800 transition group mb-2">
+                    <div class="flex items-center gap-4 text-right flex-1">
+                         <div class="w-12 h-12 rounded-full ${cat.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                            <i class="fa-solid ${cat.icon} ${cat.color} text-xl"></i>
+                         </div>
+                         <div>
+                             <h3 class="text-white font-bold text-base">${cat.name}</h3>
+                             ${descHtml}
+                         </div>
+                    </div>
+                    ${!isDebt ? '<i class="fa-solid fa-angle-left text-gray-600 group-hover:-translate-x-1 transition"></i>' : ''}
+                    ${isDebt ? `<i class="fa-solid fa-chevron-left text-gray-600"></i>` : ''}
+                </div>
+            `;
+        });
+    },
+
+    selectCategory(id) {
+        const cat = CATEGORIES.find(c => c.id === id);
+        if (!cat) return;
+
+        // Update Transaction Modal UI
+        document.getElementById('tx-category-id').value = cat.id;
+        document.getElementById('tx-category-name').innerText = cat.name;
+
+        const iconContainer = document.getElementById('tx-category-icon-bg');
+        iconContainer.className = `w-8 h-8 rounded-full ${cat.bg} flex items-center justify-center shrink-0`;
+
+        const icon = document.getElementById('tx-category-icon');
+        icon.className = `fa-solid ${cat.icon} ${cat.color}`;
+
+        this.closeModal('modal-categories');
+    },
+
     toggleTxCurrency() {
         const btn = document.getElementById('tx-currency-label');
+        const sym = document.getElementById('tx-currency-symbol');
         if (btn) {
-            btn.innerText = btn.innerText === 'IQD' ? 'USD' : 'IQD';
+            const current = btn.innerText;
+            const next = current === 'IQD' ? 'USD' : 'IQD';
+            btn.innerText = next;
+
+            if (sym) sym.innerText = next === 'USD' ? '$' : 'د.ع';
+            document.getElementById('tx-amount').placeholder = next === 'USD' ? '$0' : '0';
         }
     },
 
     openTransactionModal() {
         document.getElementById('modal-transaction').classList.remove('hidden');
-        
-        // Populate Selects
+
+        // Populate Selects - Wallet Only
         const ws = document.getElementById('tx-wallet');
         ws.innerHTML = '';
         this.state.wallets.forEach(w => { ws.innerHTML += `<option value="${w.id}">${w.name}</option>`; });
-        
-        const cs = document.getElementById('tx-category');
-        cs.innerHTML = '';
-        CATEGORIES.forEach(c => { cs.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+
+        // Reset Category to default (First Expense)
+        const defaultCat = CATEGORIES[0];
+        this.selectCategory(defaultCat.id);
 
         // Reset Fields
         document.getElementById('tx-amount').value = '';
         document.getElementById('tx-note').value = '';
         document.getElementById('tx-contact').value = '';
-        
+
         // Default Date (Now)
         const now = new Date();
         const year = now.getFullYear();
@@ -367,7 +472,7 @@ const app = {
         document.getElementById('tx-recurring-interval').classList.add('hidden');
         document.getElementById('tx-reminder-toggle').checked = false;
         document.getElementById('tx-exclude').checked = false;
-        
+
         // Reset Priority to Essential
         const prioRadios = document.querySelectorAll('input[name="tx-priority"]');
         if (prioRadios.length) prioRadios[0].checked = true;
@@ -375,11 +480,12 @@ const app = {
 
     saveTransaction() {
         const amount = parseFloat(document.getElementById('tx-amount').value);
-        const cat = document.getElementById('tx-category').value;
+        // const cat = document.getElementById('tx-category').value; // OLD
+        const catId = document.getElementById('tx-category-id').value;
         const walletId = document.getElementById('tx-wallet').value;
         const note = document.getElementById('tx-note').value;
         const priority = document.querySelector('input[name="tx-priority"]:checked').value;
-        
+
         // New Fields
         const dateVal = document.getElementById('tx-date').value;
         const contact = document.getElementById('tx-contact').value;
@@ -390,11 +496,21 @@ const app = {
         const txCurrency = document.getElementById('tx-currency-label').innerText;
 
         if (!amount) return alert('أدخل المبلغ');
+        if (!catId) return alert('اختر القسم');
+
+        // Determine sign based on category type
+        const catObj = CATEGORIES.find(c => c.id === catId);
+        let finalAmount = -Math.abs(amount); // Default expense
+        if (catObj && catObj.type === 'income') finalAmount = Math.abs(amount);
+        // Debt logic - for simplicity treat paying debt as expense (-), receiving as income (+) per screenshot intent
+        // "Pay Debt" -> Money leaving -> Expense (-)
+        // "Receive Debt" -> Money entering -> Income (+)
+        if (catObj && catObj.id === 'receive_debt') finalAmount = Math.abs(amount);
 
         const newTx = {
             id: Date.now(),
-            amount: -amount, // Expense is negative
-            category: cat,
+            amount: finalAmount,
+            category: catId,
             walletId: walletId,
             note: note,
             priority: priority,
@@ -412,7 +528,7 @@ const app = {
         // Update Wallet Balance ONLY if not excluded
         if (!isExcluded) {
             const w = this.state.wallets.find(x => x.id == walletId);
-            if (w) w.balance -= amount;
+            if (w) w.balance += finalAmount; // Add (negative for expense, positive for income)
         }
 
         this.saveData();

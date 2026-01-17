@@ -506,7 +506,7 @@
                     <button id="tx-currency-btn" onclick="app.toggleTxCurrency()"
                         class="w-16 h-14 bg-navy-800 rounded-lg border border-navy-700 text-emerald-500 font-bold text-xl flex items-center justify-center flex-col shadow">
                         <span class="text-[10px] text-gray-400 -mb-1" id="tx-currency-label">IQD</span>
-                        <span>$</span>
+                        <span id="tx-currency-symbol">$</span>
                     </button>
                     <div class="flex-1 relative">
                         <label class="absolute -top-3 right-2 text-gray-500 text-xs bg-navy-900 px-1">المبلغ</label>
@@ -514,8 +514,8 @@
                             class="w-full h-14 bg-navy-950 border-b border-gray-600 text-right text-2xl font-bold text-white focus:outline-none focus:border-emerald-500 px-2"
                             placeholder="0">
                     </div>
-                    <button
-                        class="w-14 h-14 bg-emerald-500/20 rounded-lg border border-emerald-500/50 text-emerald-500 flex items-center justify-center text-xl">
+                    <button onclick="document.getElementById('tx-amount').focus()"
+                        class="w-full h-full bg-emerald-500/20 rounded-lg border border-emerald-500/50 text-emerald-500 flex items-center justify-center text-xl hover:bg-emerald-500/30 transition active:scale-95">
                         <i class="fa-solid fa-calculator"></i>
                     </button>
                 </div>
@@ -523,20 +523,19 @@
                 <!-- Selectors Group -->
                 <div class="space-y-4">
 
-                    <!-- Category -->
-                    <div class="flex items-center justify-between py-2 border-b border-navy-800"
-                        onclick="document.getElementById('tx-category').focus()">
+                    <!-- Category (Now opens Modal) -->
+                    <div class="flex items-center justify-between py-2 border-b border-navy-800 cursor-pointer"
+                        onclick="app.openCategoryModal()">
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-rose-200 flex items-center justify-center"><i
-                                    class="fa-solid fa-user-doctor text-rose-500"></i></div>
-                            <select id="tx-category"
-                                class="bg-transparent text-white text-lg font-bold outline-none appearance-none pr-8 text-right w-full">
-                                <!-- JS Populated -->
-                            </select>
+                            <div id="tx-category-icon-bg"
+                                class="w-8 h-8 rounded-full bg-navy-800 flex items-center justify-center shrink-0">
+                                <i id="tx-category-icon" class="fa-solid fa-list text-gray-400"></i>
+                            </div>
+                            <!-- Hidden Input to store ID -->
+                            <input type="hidden" id="tx-category-id">
+                            <span id="tx-category-name" class="text-white text-lg font-bold">اختر القسم</span>
                         </div>
-                        <div class="text-left w-24">
-                            <p class="text-gray-500 text-xs">الغذاء</p>
-                        </div>
+                        <i class="fa-solid fa-angle-left text-gray-500"></i>
                     </div>
 
                     <!-- Wallet -->
@@ -562,12 +561,12 @@
                             class="bg-transparent text-white w-full text-right outline-none placeholder-gray-600">
                     </div>
 
-                    <!-- Date (NEW) -->
+                    <!-- Date (Fixed Typo) -->
                     <div class="flex items-center justify-between py-2 border-b border-navy-800">
                         <div class="flex items-center gap-3">
                             <div class="w-8 flex justify-center"><i
                                     class="fa-regular fa-calendar text-gray-400 text-xl"></i></div>
-                            <span class="text-white font-bold">تارخ المعاملة</span>
+                            <span class="text-white font-bold">تاريخ المعاملة</span>
                         </div>
                         <input type="datetime-local" id="tx-date"
                             class="bg-transparent text-gray-400 text-sm outline-none [color-scheme:dark]">
@@ -697,6 +696,57 @@
                     إضافة معاملة
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- CATEGORY SELECTION MODAL (NEW) -->
+    <div id="modal-categories" class="fixed inset-0 z-[110] hidden bg-navy-950 flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-navy-800 shrink-0">
+            <div class="w-10"></div>
+            <h2 class="text-white font-bold text-xl">الأقسام</h2>
+            <button onclick="app.closeModal('modal-categories')"
+                class="text-gray-400 hover:text-white transition w-10 flex justify-end">
+                <i class="fa-solid fa-arrow-left text-xl"></i>
+            </button>
+        </div>
+
+        <!-- TABS -->
+        <div class="flex border-b border-navy-800 shrink-0">
+            <button onclick="app.switchCategoryTab('expense')" id="cat-tab-expense"
+                class="flex-1 py-4 text-center text-gray-400 border-b-2 border-transparent hover:text-white transition font-bold relative text-lg">
+                المصروف
+            </button>
+            <button onclick="app.switchCategoryTab('income')" id="cat-tab-income"
+                class="flex-1 py-4 text-center text-gray-400 border-b-2 border-transparent hover:text-white transition font-bold relative text-lg">
+                الدخل
+            </button>
+            <button onclick="app.switchCategoryTab('debt')" id="cat-tab-debt"
+                class="flex-1 py-4 text-center text-gray-400 border-b-2 border-transparent hover:text-white transition font-bold relative text-lg">
+                الديون
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="p-4 bg-navy-950 shrink-0">
+            <div class="relative">
+                <input type="text" placeholder="بحث" id="cat-search" onkeyup="app.filterCategories()"
+                    class="w-full bg-navy-900 rounded-lg p-3 text-right text-white border border-navy-800 text-sm focus:outline-none focus:border-emerald-500 pl-10">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-500"></i>
+            </div>
+        </div>
+
+        <!-- Categories List -->
+        <div id="categories-list" class="flex-1 overflow-y-auto px-4 pb-24 space-y-2">
+            <!-- Dynamic -->
+        </div>
+
+        <!-- FAB Add Category -->
+        <div class="fixed bottom-6 right-6">
+            <button
+                class="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition active:scale-95">
+                <i class="fa-solid fa-plus text-xl"></i>
+            </button>
         </div>
     </div>
 
