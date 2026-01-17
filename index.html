@@ -490,25 +490,18 @@
                 </div>
             </div>
 
-            <!-- Scrollable Content -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-6">
                 <!-- Search -->
-                <div class="relative">
+                <div class="relative hidden">
                     <input type="text" placeholder="بحث"
                         class="w-full bg-navy-950 rounded-lg p-3 text-right text-gray-400 border border-navy-800 text-sm focus:outline-none focus:border-emerald-500">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-500"></i>
                 </div>
 
-                <!-- Colors / Type -->
-                <div class="flex justify-end gap-2">
-                    <!-- Could indicate expense/income here, keeping simple per image -->
-                </div>
-
                 <!-- Amount Input Row -->
                 <div class="flex gap-3">
-                    <button
-                        class="w-14 h-14 bg-navy-800 rounded-lg border border-navy-700 text-emerald-500 font-bold text-xl flex items-center justify-center flex-col shadow">
-                        <span class="text-[10px] text-gray-400 -mb-1">IQD</span>
+                    <button id="tx-currency-btn" onclick="app.toggleTxCurrency()"
+                        class="w-16 h-14 bg-navy-800 rounded-lg border border-navy-700 text-emerald-500 font-bold text-xl flex items-center justify-center flex-col shadow">
+                        <span class="text-[10px] text-gray-400 -mb-1" id="tx-currency-label">IQD</span>
                         <span>$</span>
                     </button>
                     <div class="flex-1 relative">
@@ -523,8 +516,9 @@
                     </button>
                 </div>
 
-                <!-- Selectors -->
+                <!-- Selectors Group -->
                 <div class="space-y-4">
+                    
                     <!-- Category -->
                     <div class="flex items-center justify-between py-2 border-b border-navy-800"
                         onclick="document.getElementById('tx-category').focus()">
@@ -536,7 +530,9 @@
                                 <!-- JS Populated -->
                             </select>
                         </div>
-                        <i class="fa-solid fa-caret-down text-gray-500"></i>
+                        <div class="text-left w-24">
+                            <p class="text-gray-500 text-xs">الغذاء</p>
+                        </div>
                     </div>
 
                     <!-- Wallet -->
@@ -544,83 +540,131 @@
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center"><i
                                     class="fa-solid fa-credit-card text-navy-900"></i></div>
-                            <div class="text-right">
-                                <p class="text-white font-bold">حساب بنكي</p>
-                                <p class="text-gray-400 text-xs dir-ltr">-28,000 $</p>
+                            <div class="text-right flex-1">
+                                <select id="tx-wallet" class="bg-transparent text-white font-bold outline-none w-full appearance-none">
+                                    <!-- JS Populated -->
+                                </select>
                             </div>
                         </div>
                         <i class="fa-solid fa-caret-down text-gray-500"></i>
-                        <!-- Hidden Select for logic -->
-                        <select id="tx-wallet" class="hidden"></select>
                     </div>
 
                     <!-- Note -->
                     <div class="flex items-center gap-3 border-b border-navy-800 py-2">
-                        <i class="fa-solid fa-bars text-gray-500 text-xl"></i>
+                        <div class="w-8 flex justify-center"><i class="fa-solid fa-bars text-gray-500 text-xl"></i></div>
                         <input type="text" id="tx-note" placeholder="الملاحظات"
-                            class="bg-transparent text-white w-full text-right outline-none">
+                            class="bg-transparent text-white w-full text-right outline-none placeholder-gray-600">
                     </div>
-                </div>
 
-                <!-- Attachment Buttons -->
-                <div class="grid grid-cols-2 gap-0 border border-navy-700/50 rounded-lg overflow-hidden">
-                    <button class="py-4 bg-navy-950 hover:bg-navy-800 text-gray-400 border-l border-navy-700/50"><i
-                            class="fa-solid fa-camera"></i></button>
-                    <button class="py-4 bg-navy-950 hover:bg-navy-800 text-gray-400"><i
-                            class="fa-regular fa-image"></i></button>
-                </div>
-
-                <!-- Priority (Matches Image 7 Bottom) -->
-                <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-white">الأولويـة</h3>
-                        <i class="fa-solid fa-circle-question text-gray-500"></i>
-                    </div>
-                    <div class="flex gap-3">
-                        <!-- Essential -->
-                        <label class="cursor-pointer flex-1">
-                            <input type="radio" name="tx-priority" value="essential" class="peer hidden" checked>
-                            <div
-                                class="flex flex-col items-center justify-center p-3 rounded-lg bg-emerald-700/20 border border-transparent peer-checked:bg-emerald-600 peer-checked:text-white text-gray-400 h-24 transition">
-                                <i class="fa-regular fa-face-smile text-3xl mb-2"></i>
-                                <span class="font-bold text-sm">أساسي</span>
-                            </div>
-                        </label>
-                        <!-- Normal -->
-                        <label class="cursor-pointer flex-1">
-                            <input type="radio" name="tx-priority" value="normal" class="peer hidden">
-                            <div
-                                class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-800 border border-transparent peer-checked:bg-yellow-600 peer-checked:text-white text-gray-400 h-24 transition">
-                                <i class="fa-regular fa-face-meh text-3xl mb-2"></i>
-                                <span class="font-bold text-sm">عادي</span>
-                            </div>
-                        </label>
-                        <!-- Luxury -->
-                        <label class="cursor-pointer flex-1">
-                            <input type="radio" name="tx-priority" value="luxury" class="peer hidden">
-                            <div
-                                class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-800 border border-transparent peer-checked:bg-rose-600 peer-checked:text-white text-gray-400 h-24 transition">
-                                <i class="fa-regular fa-face-frown text-3xl mb-2"></i>
-                                <span class="font-bold text-sm">ترفيهي</span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Checkbox Bottom -->
-                <div class="flex items-center justify-between text-xs text-gray-400 mt-2">
-                    <div class="text-right">
-                        <p class="text-white font-bold">عدم التأثير على الرصيد</p>
-                        <p>عند تفعيلها سيتم تجاهل هذه المعاملة من رصيد..</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer">
-                        <div
-                            class="w-10 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500">
+                    <!-- Date (NEW) -->
+                    <div class="flex items-center justify-between py-2 border-b border-navy-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 flex justify-center"><i class="fa-regular fa-calendar text-gray-400 text-xl"></i></div>
+                            <span class="text-white font-bold">تارخ المعاملة</span>
                         </div>
-                    </label>
+                        <input type="datetime-local" id="tx-date" class="bg-transparent text-gray-400 text-sm outline-none [color-scheme:dark]">
+                    </div>
+
+                    <!-- Attachments -->
+                    <div class="grid grid-cols-2 gap-0 border border-navy-700/50 rounded-lg overflow-hidden mt-4">
+                        <button class="py-4 bg-navy-950 hover:bg-navy-800 text-gray-400 border-l border-navy-700/50 flex flex-col items-center gap-1">
+                            <i class="fa-solid fa-camera text-xl"></i>
+                            <span class="text-xs">كاميرا</span>
+                        </button>
+                        <button class="py-4 bg-navy-950 hover:bg-navy-800 text-gray-400 flex flex-col items-center gap-1">
+                            <i class="fa-regular fa-image text-xl"></i>
+                            <span class="text-xs">ألبوم</span>
+                        </button>
+                    </div>
+
+                    <!-- Recurring (NEW) -->
+                    <div class="flex items-center justify-between py-2 border-b border-navy-800 mt-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 flex justify-center"><i class="fa-solid fa-repeat text-gray-400 text-xl"></i></div>
+                            <div class="text-right">
+                                <p class="text-white font-bold text-sm">تكرار المعاملة</p>
+                                <select id="tx-recurring-interval" class="bg-navy-950 text-emerald-500 text-xs outline-none mt-1 hidden border border-navy-700 rounded p-1">
+                                    <option value="daily">يومياً</option>
+                                    <option value="weekly">أسبوعياً</option>
+                                    <option value="monthly" selected>شهرياً</option>
+                                    <option value="quarterly">ربع سنوياً</option>
+                                    <option value="yearly">سنوياً</option>
+                                </select>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="tx-recurring-toggle" class="sr-only peer" onchange="document.getElementById('tx-recurring-interval').classList.toggle('hidden')">
+                            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-emerald-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                        </label>
+                    </div>
+
+                    <!-- Reminder (NEW) -->
+                    <div class="flex items-center justify-between py-2 border-b border-navy-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 flex justify-center"><i class="fa-regular fa-bell text-gray-400 text-xl"></i></div>
+                            <span class="text-white font-bold text-sm">التنبيه بالمعاملة</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="tx-reminder-toggle" class="sr-only peer">
+                            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-emerald-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                        </label>
+                    </div>
+
+                    <!-- Contact (NEW) -->
+                    <div class="flex items-center gap-3 border-b border-navy-800 py-2">
+                        <div class="w-8 flex justify-center"><i class="fa-regular fa-address-book text-gray-400 text-xl"></i></div>
+                        <input type="text" id="tx-contact" placeholder="جهة الاتصال"
+                            class="bg-transparent text-white w-full text-right outline-none placeholder-gray-600">
+                    </div>
+
+                    <!-- Priority -->
+                    <div class="pt-2">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-white text-sm font-bold">الأولويـة</h3>
+                            <i class="fa-solid fa-circle-question text-gray-500"></i>
+                        </div>
+                        <div class="flex gap-2">
+                            <label class="cursor-pointer flex-1">
+                                <input type="radio" name="tx-priority" value="essential" class="peer hidden" checked>
+                                <div
+                                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-navy-800 border border-transparent peer-checked:bg-emerald-600/20 peer-checked:border-emerald-500 peer-checked:text-white text-gray-400 h-20 transition">
+                                    <i class="fa-regular fa-face-smile text-2xl mb-1 peer-checked:text-emerald-500"></i>
+                                    <span class="font-bold text-xs">أساسي</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer flex-1">
+                                <input type="radio" name="tx-priority" value="normal" class="peer hidden">
+                                <div
+                                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-navy-800 border border-transparent peer-checked:bg-yellow-600/20 peer-checked:border-yellow-500 peer-checked:text-white text-gray-400 h-20 transition">
+                                    <i class="fa-regular fa-face-meh text-2xl mb-1 peer-checked:text-yellow-500"></i>
+                                    <span class="font-bold text-xs">عادي</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer flex-1">
+                                <input type="radio" name="tx-priority" value="luxury" class="peer hidden">
+                                <div
+                                    class="flex flex-col items-center justify-center p-2 rounded-lg bg-navy-800 border border-transparent peer-checked:bg-rose-600/20 peer-checked:border-rose-500 peer-checked:text-white text-gray-400 h-20 transition">
+                                    <i class="fa-regular fa-face-frown text-2xl mb-1 peer-checked:text-rose-500"></i>
+                                    <span class="font-bold text-xs">ترفيهي</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Exclude Checkbox -->
+                    <div class="flex items-center justify-between text-xs text-gray-400 mt-2 bg-navy-800/50 p-3 rounded-lg">
+                        <div class="text-right">
+                            <p class="text-white font-bold mb-1">عدم التأثير على الرصيد</p>
+                            <p class="text-[10px] opacity-70">تفعيل هذا الخيار سيجعل المعاملة لا تخصم من الرصيد الفعلي</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="tx-exclude" class="sr-only peer">
+                            <div
+                                class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-emerald-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all">
+                            </div>
+                        </label>
+                    </div>
                 </div>
-            </div>
 
             <!-- Footer Button -->
             <div class="p-4 bg-navy-950 border-t border-navy-800">

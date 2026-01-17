@@ -329,14 +329,48 @@ const app = {
         });
     },
 
+    toggleTxCurrency() {
+        const btn = document.getElementById('tx-currency-label');
+        if (btn) {
+            btn.innerText = btn.innerText === 'IQD' ? 'USD' : 'IQD';
+        }
+    },
+
     openTransactionModal() {
         document.getElementById('modal-transaction').classList.remove('hidden');
+        
+        // Populate Selects
         const ws = document.getElementById('tx-wallet');
         ws.innerHTML = '';
         this.state.wallets.forEach(w => { ws.innerHTML += `<option value="${w.id}">${w.name}</option>`; });
+        
         const cs = document.getElementById('tx-category');
         cs.innerHTML = '';
         CATEGORIES.forEach(c => { cs.innerHTML += `<option value="${c.id}">${c.name}</option>`; });
+
+        // Reset Fields
+        document.getElementById('tx-amount').value = '';
+        document.getElementById('tx-note').value = '';
+        document.getElementById('tx-contact').value = '';
+        
+        // Default Date (Now)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('tx-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        // Reset Toggles
+        document.getElementById('tx-recurring-toggle').checked = false;
+        document.getElementById('tx-recurring-interval').classList.add('hidden');
+        document.getElementById('tx-reminder-toggle').checked = false;
+        document.getElementById('tx-exclude').checked = false;
+        
+        // Reset Priority to Essential
+        const prioRadios = document.querySelectorAll('input[name="tx-priority"]');
+        if (prioRadios.length) prioRadios[0].checked = true;
     },
 
     saveTransaction() {
@@ -345,25 +379,44 @@ const app = {
         const walletId = document.getElementById('tx-wallet').value;
         const note = document.getElementById('tx-note').value;
         const priority = document.querySelector('input[name="tx-priority"]:checked').value;
+        
+        // New Fields
+        const dateVal = document.getElementById('tx-date').value;
+        const contact = document.getElementById('tx-contact').value;
+        const isRecurring = document.getElementById('tx-recurring-toggle').checked;
+        const recurringInterval = isRecurring ? document.getElementById('tx-recurring-interval').value : null;
+        const hasReminder = document.getElementById('tx-reminder-toggle').checked;
+        const isExcluded = document.getElementById('tx-exclude').checked;
+        const txCurrency = document.getElementById('tx-currency-label').innerText;
 
         if (!amount) return alert('أدخل المبلغ');
 
-        this.state.transactions.push({
+        const newTx = {
             id: Date.now(),
-            amount: -amount,
+            amount: -amount, // Expense is negative
             category: cat,
             walletId: walletId,
             note: note,
             priority: priority,
-            date: new Date().toISOString()
-        });
+            date: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
+            contact: contact,
+            isRecurring: isRecurring,
+            recurringInterval: recurringInterval,
+            hasReminder: hasReminder,
+            isExcluded: isExcluded,
+            currency: txCurrency
+        };
 
-        const w = this.state.wallets.find(x => x.id == walletId);
-        w.balance -= amount;
+        this.state.transactions.push(newTx);
+
+        // Update Wallet Balance ONLY if not excluded
+        if (!isExcluded) {
+            const w = this.state.wallets.find(x => x.id == walletId);
+            if (w) w.balance -= amount;
+        }
 
         this.saveData();
         this.closeModal('modal-transaction');
-        document.getElementById('tx-amount').value = '';
         this.render();
     },
 
