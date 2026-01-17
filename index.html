@@ -427,7 +427,7 @@
                         </div>
                     </div>
                     <!-- Manage Categories (NEW) -->
-                    <div onclick="app.openCategoryModal()"
+                    <div onclick="app.openCategoryModal(true)"
                         class="flex justify-between items-center py-4 border-b border-navy-800 px-2 cursor-pointer hover:bg-navy-900 transition">
                         <div class="flex items-center gap-4">
                             <div
@@ -756,7 +756,7 @@
 
         <!-- FAB Add Category -->
         <div class="fixed bottom-6 right-6">
-            <button onclick="app.addCategory()"
+            <button onclick="app.openAddCategoryModal()"
                 class="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition active:scale-95">
                 <i class="fa-solid fa-plus text-xl"></i>
             </button>
@@ -767,12 +767,24 @@
     <div id="modal-add-category" class="fixed inset-0 z-[120] hidden bg-navy-950 flex flex-col">
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-navy-800 shrink-0">
-            <div class="w-10"></div>
-            <h2 class="text-white font-bold text-xl">إضافة قسم</h2>
             <button onclick="app.closeModal('modal-add-category')"
-                class="text-gray-400 hover:text-white transition w-10 flex justify-end">
-                <i class="fa-solid fa-arrow-left text-xl"></i>
+                class="text-gray-400 hover:text-white transition w-10 flex justify-start">
+                <i class="fa-solid fa-times text-xl"></i>
             </button>
+
+            <!-- Type Dropdown (Top Center) -->
+            <div class="relative">
+                <select id="new-cat-type" onchange="app.toggleMainCategorySwitch()"
+                    class="appearance-none bg-navy-900 text-white font-bold text-lg py-1 px-8 rounded-full border border-navy-700 outline-none text-center">
+                    <option value="expense">المصروف</option>
+                    <option value="income">الدخل</option>
+                    <option value="debt">الديون</option>
+                </select>
+                <i
+                    class="fa-solid fa-caret-down absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+            </div>
+
+            <div class="w-10"></div>
         </div>
 
         <div class="p-6 space-y-6 flex-1 overflow-y-auto">
@@ -820,14 +832,42 @@
                 </div>
             </div>
 
+            <!-- Priority Selector -->
+            <div class="space-y-2">
+                <label class="text-gray-400 text-sm">الأهمية</label>
+                <div class="flex gap-2">
+                    <label class="cursor-pointer flex-1">
+                        <input type="radio" name="new-cat-priority" value="essential" class="peer hidden" checked>
+                        <div
+                            class="py-3 px-2 rounded-lg bg-navy-800 border border-navy-700 text-center text-gray-400 peer-checked:bg-emerald-500/20 peer-checked:border-emerald-500 peer-checked:text-emerald-500 transition text-sm font-bold">
+                            أساسي
+                        </div>
+                    </label>
+                    <label class="cursor-pointer flex-1">
+                        <input type="radio" name="new-cat-priority" value="normal" class="peer hidden">
+                        <div
+                            class="py-3 px-2 rounded-lg bg-navy-800 border border-navy-700 text-center text-gray-400 peer-checked:bg-yellow-500/20 peer-checked:border-yellow-500 peer-checked:text-yellow-500 transition text-sm font-bold">
+                            عادي
+                        </div>
+                    </label>
+                    <label class="cursor-pointer flex-1">
+                        <input type="radio" name="new-cat-priority" value="luxury" class="peer hidden">
+                        <div
+                            class="py-3 px-2 rounded-lg bg-navy-800 border border-navy-700 text-center text-gray-400 peer-checked:bg-rose-500/20 peer-checked:border-rose-500 peer-checked:text-rose-500 transition text-sm font-bold">
+                            ترفيهي
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             <!-- Predefined Icons/Colors (Simple Selection) -->
             <div class="space-y-2">
                 <label class="text-gray-400 text-sm">أيقونة ولون</label>
                 <div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar" id="new-cat-icons">
-                    <!-- Mock selection for updated UI later if needed -->
+                    <!-- Mock selection -->
                     <div
                         class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 border border-emerald-500">
-                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-icons"></i>
                     </div>
                 </div>
             </div>

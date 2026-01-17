@@ -50,7 +50,8 @@ const app = {
         categories: [],
         currency: 'IQD',
         txFilter: 'today',
-        activeCatTab: 'expense'
+        activeCatTab: 'expense',
+        isManagingCategories: false
     },
 
     init() {
@@ -370,8 +371,14 @@ const app = {
     },
 
     // --- Category Modal Logic ---
-    openCategoryModal() {
+    openCategoryModal(isManagement = false) {
+        this.state.isManagingCategories = isManagement;
         document.getElementById('modal-categories').classList.remove('hidden');
+
+        // Update Header Title depending on mode?
+        const title = isManagement ? 'إدارة الأقسام' : 'الأقسام';
+        document.querySelector('#modal-categories h2').innerText = title;
+
         this.switchCategoryTab('expense'); // Default to expense
         document.getElementById('cat-search').value = '';
     },
@@ -433,7 +440,11 @@ const app = {
                              ${descHtml}
                          </div>
                     </div>
-                    <div class="w-8 flex justify-center">
+                    <div class="w-auto flex items-center gap-3 justify-end pl-2">
+                         ${this.state.isManagingCategories ? `
+                            <button onclick="event.stopPropagation(); app.deleteCategory('${cat.id}')" class="w-8 h-8 rounded-full bg-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="event.stopPropagation(); app.openAddCategoryModal('${cat.id}')" class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-pen"></i></button>
+                         ` : ''}
                         ${arrowIcon}
                     </div>
                 </div>
@@ -503,15 +514,56 @@ const app = {
         this.closeModal('modal-categories');
     },
 
-    openAddCategoryModal() {
+    openAddCategoryModal(editId = null) {
         document.getElementById('modal-add-category').classList.remove('hidden');
-        this.toggleMainCategorySwitch(); // Reset state
-        document.getElementById('new-cat-name').value = '';
+
+        const nameInput = document.getElementById('new-cat-name');
+        const typeSelect = document.getElementById('new-cat-type');
+        const mainToggle = document.getElementById('cat-is-main-toggle');
+        const saveBtn = document.querySelector('#modal-add-category button[onclick^="app.saveNewCategory"]');
+
+        // Default values
+        if (typeSelect) typeSelect.value = this.state.activeCatTab;
+        nameInput.value = '';
+        mainToggle.checked = true;
+
+        if (saveBtn) {
+            saveBtn.innerText = 'إضافة قسم';
+            saveBtn.setAttribute('onclick', `app.saveNewCategory()`);
+        }
+
+        if (editId && editId !== 'undefined' && editId !== '') {
+            const cat = this.state.categories.find(c => c.id === editId);
+            if (cat) {
+                if (saveBtn) {
+                    saveBtn.innerText = 'حفظ التعديلات';
+                    saveBtn.setAttribute('onclick', `app.saveNewCategory('${editId}')`);
+                }
+                nameInput.value = cat.name;
+                if (typeSelect) typeSelect.value = cat.type;
+                mainToggle.checked = true; // For editing, keep simple
+
+                // Priority
+                if (cat.priority) {
+                    const pRadio = document.querySelector(`input[name="new-cat-priority"][value="${cat.priority}"]`);
+                    if (pRadio) pRadio.checked = true;
+                }
+
+                document.getElementById('cat-is-main-toggle').disabled = true;
+            }
+        } else {
+            // New Category
+            document.getElementById('cat-is-main-toggle').disabled = false;
+        }
+        this.toggleMainCategorySwitch();
     },
 
     toggleMainCategorySwitch() {
         const isMain = document.getElementById('cat-is-main-toggle').checked;
+        const typeSelect = document.getElementById('new-cat-type');
+        const type = typeSelect ? typeSelect.value : this.state.activeCatTab;
         const parentContainer = document.getElementById('parent-cat-container');
+
         if (isMain) {
             parentContainer.classList.add('opacity-50', 'pointer-events-none');
             document.getElementById('new-cat-parent').disabled = true;
@@ -520,55 +572,81 @@ const app = {
             const parentSelect = document.getElementById('new-cat-parent');
             parentSelect.disabled = false;
 
-            // Populate Parents (Current Type)
+            // Populate Parents based on Selected Type
             parentSelect.innerHTML = '';
-            const currents = this.state.categories.filter(c => c.type === this.state.activeCatTab);
+            const currents = this.state.categories.filter(c => c.type === type);
             currents.forEach(c => {
                 parentSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             });
         }
     },
 
-    saveNewCategory() {
+    saveNewCategory(editId = null) {
         const name = document.getElementById('new-cat-name').value;
         if (!name) return alert('أدخل اسم القسم');
 
         const isMain = document.getElementById('cat-is-main-toggle').checked;
-        const type = this.state.activeCatTab;
+        const typeSelect = document.getElementById('new-cat-type');
+        const type = typeSelect ? typeSelect.value : this.state.activeCatTab;
 
-        // Icon/Color Randomizer for now (or basic selection)
-        const icons = ['fa-star', 'fa-heart', 'fa-circle', 'fa-square', 'fa-tag'];
-        const colors = ['text-emerald-500', 'text-rose-500', 'text-blue-500', 'text-purple-500', 'text-orange-500'];
-        const bgs = ['bg-emerald-500/20', 'bg-rose-500/20', 'bg-blue-500/20', 'bg-purple-500/20', 'bg-orange-500/20'];
+        const priorityInput = document.querySelector('input[name="new-cat-priority"]:checked');
+        const priority = priorityInput ? priorityInput.value : 'essential';
+
+        // Icon/Color Randomizer
+        const icons = ['fa-star', 'fa-heart', 'fa-circle', 'fa-square', 'fa-tag', 'fa-wallet', 'fa-money-bill'];
+        const colors = ['text-emerald-500', 'text-rose-500', 'text-blue-500', 'text-purple-500', 'text-orange-500', 'text-yellow-500'];
+        const bgs = ['bg-emerald-500/20', 'bg-rose-500/20', 'bg-blue-500/20', 'bg-purple-500/20', 'bg-orange-500/20', 'bg-yellow-500/20'];
         const randIdx = Math.floor(Math.random() * icons.length);
 
-        if (isMain) {
-            const newCat = {
-                id: 'cat_' + Date.now(),
-                type: type,
-                name: name,
-                icon: icons[randIdx],
-                color: colors[randIdx],
-                bg: bgs[randIdx],
-                subcategories: []
-            };
-            this.state.categories.push(newCat);
+        if (editId && editId !== 'undefined' && editId !== '') {
+            // Update Existing
+            const cat = this.state.categories.find(c => c.id === editId);
+            if (cat) {
+                cat.name = name;
+                cat.type = type;
+                cat.priority = priority;
+            }
         } else {
-            const parentId = document.getElementById('new-cat-parent').value;
-            const parent = this.state.categories.find(c => c.id === parentId);
-            if (parent) {
-                if (!parent.subcategories) parent.subcategories = [];
-                parent.subcategories.push({
-                    id: 'sub_' + Date.now(),
+            // Create New
+            if (isMain) {
+                const newCat = {
+                    id: 'cat_' + Date.now(),
+                    type: type,
                     name: name,
-                    icon: icons[randIdx]
-                });
+                    icon: icons[randIdx],
+                    color: colors[randIdx % colors.length],
+                    bg: bgs[randIdx % bgs.length],
+                    priority: priority,
+                    subcategories: []
+                };
+                this.state.categories.push(newCat);
+            } else {
+                const parentId = document.getElementById('new-cat-parent').value;
+                const parent = this.state.categories.find(c => c.id === parentId);
+                if (parent) {
+                    if (!parent.subcategories) parent.subcategories = [];
+                    parent.subcategories.push({
+                        id: 'sub_' + Date.now(),
+                        name: name,
+                        icon: icons[randIdx]
+                    });
+                } else {
+                    return alert('يرجى اختيار قسم رئيسي صحيح');
+                }
             }
         }
 
         this.saveData();
         this.closeModal('modal-add-category');
-        this.renderCategoriesList(type, '');
+        // Refresh list
+        this.renderCategoriesList(this.state.activeCatTab, '');
+    },
+
+    deleteCategory(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا القسم؟')) return;
+        this.state.categories = this.state.categories.filter(c => c.id !== id);
+        this.saveData();
+        this.renderCategoriesList(this.state.activeCatTab, '');
     },
 
     toggleTxCurrency() {
@@ -593,9 +671,11 @@ const app = {
         this.state.wallets.forEach(w => { ws.innerHTML += `<option value="${w.id}">${w.name}</option>`; });
 
         // Reset Category to default (First Expense)
-        // Reset Category to default (First Expense)
         const defaultCat = this.state.categories[0];
-        this.selectCategory(defaultCat.id);
+        if (defaultCat) {
+            document.getElementById('tx-category-id').value = defaultCat.id;
+            document.getElementById('tx-category-name').innerText = defaultCat.name;
+        }
 
         // Reset Fields
         document.getElementById('tx-amount').value = '';
