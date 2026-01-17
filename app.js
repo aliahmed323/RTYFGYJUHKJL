@@ -2,8 +2,23 @@ const STORAGE_KEY = 'masarif_pro_v3_ui';
 
 const CATEGORIES = [
     // EXPENSE
-    { id: 'food', type: 'expense', name: 'الغذاء', icon: 'fa-utensils', color: 'text-orange-500', bg: 'bg-orange-500/20' },
-    { id: 'transport', type: 'expense', name: 'المواصلات', icon: 'fa-car', color: 'text-blue-500', bg: 'bg-blue-500/20' },
+    {
+        id: 'food', type: 'expense', name: 'الغذاء', icon: 'fa-utensils', color: 'text-orange-500', bg: 'bg-orange-500/20',
+        subcategories: [
+            { id: 'groceries', name: 'مقيال', icon: 'fa-basket-shopping' },
+            { id: 'restaurant', name: 'مطاعم', icon: 'fa-burger' },
+            { id: 'coffee', name: 'كوفي', icon: 'fa-mug-hot' },
+            { id: 'snacks', name: 'سناك', icon: 'fa-cookie' }
+        ]
+    },
+    {
+        id: 'transport', type: 'expense', name: 'المواصلات', icon: 'fa-car', color: 'text-blue-500', bg: 'bg-blue-500/20',
+        subcategories: [
+            { id: 'taxi', name: 'تكسي', icon: 'fa-taxi' },
+            { id: 'gas', name: 'وقود', icon: 'fa-gas-pump' },
+            { id: 'maintenance', name: 'صيانة', icon: 'fa-wrench' }
+        ]
+    },
     { id: 'bills', type: 'expense', name: 'فواتير', icon: 'fa-file-invoice-dollar', color: 'text-rose-500', bg: 'bg-rose-500/20' },
     { id: 'family', type: 'expense', name: 'الأسرة', icon: 'fa-house-user', color: 'text-purple-500', bg: 'bg-purple-500/20' },
     { id: 'education', type: 'expense', name: 'التعليم', icon: 'fa-graduation-cap', color: 'text-yellow-500', bg: 'bg-yellow-500/20' },
@@ -147,10 +162,6 @@ const app = {
         // 1. Update Slider Cards
         const sliderContainer = document.getElementById('tx-date-slider');
         if (sliderContainer) {
-            // ORDER: Prev Month -> Prev Week (mock) -> Month -> Week -> Yesterday -> Today
-            // NOTE: Adjusted order to be logical flow or as per user specific ordering.
-            // User drawing: [Prev Month] [Month] [Week] [Yesterday] [Today] (Right to left typically)
-
             const filters = [
                 { id: 'prevMonth', label: 'الشهر السابق', val: this.getFilteredTotal('prevMonth') },
                 { id: 'month', label: 'الشهر الحالي', val: this.getFilteredTotal('month') },
@@ -392,9 +403,18 @@ const app = {
         filtered.forEach(cat => {
             const isDebt = type === 'debt';
             const descHtml = cat.desc ? `<p class="text-gray-400 text-xs mt-1 leading-normal">${cat.desc}</p>` : '';
+            const hasSubs = cat.subcategories && cat.subcategories.length > 0;
+
+            // Parent Item logic
+            const onclick = hasSubs ? `app.toggleSubcategories('${cat.id}')` : `app.selectCategory('${cat.id}')`;
+
+            // Chevron Logic
+            const arrowIcon = hasSubs
+                ? `<i id="arrow-${cat.id}" class="fa-solid fa-chevron-left text-gray-600 transition-transform duration-200"></i>`
+                : (!isDebt ? '<i class="fa-solid fa-angle-left text-gray-600 group-hover:-translate-x-1 transition"></i>' : '<i class="fa-solid fa-chevron-left text-gray-600"></i>');
 
             list.innerHTML += `
-                <div onclick="app.selectCategory('${cat.id}')" class="flex items-center justify-between p-3 bg-navy-900/50 rounded-xl border border-navy-800 cursor-pointer hover:bg-navy-800 transition group mb-2">
+                <div onclick="${onclick}" class="flex items-center justify-between p-3 bg-navy-900/50 rounded-xl border border-navy-800 cursor-pointer hover:bg-navy-800 transition group mb-2">
                     <div class="flex items-center gap-4 text-right flex-1">
                          <div class="w-12 h-12 rounded-full ${cat.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition">
                             <i class="fa-solid ${cat.icon} ${cat.color} text-xl"></i>
@@ -404,28 +424,81 @@ const app = {
                              ${descHtml}
                          </div>
                     </div>
-                    ${!isDebt ? '<i class="fa-solid fa-angle-left text-gray-600 group-hover:-translate-x-1 transition"></i>' : ''}
-                    ${isDebt ? `<i class="fa-solid fa-chevron-left text-gray-600"></i>` : ''}
+                    <div class="w-8 flex justify-center">
+                        ${arrowIcon}
+                    </div>
                 </div>
             `;
+
+            // Subcategories Container
+            if (hasSubs) {
+                let subsHtml = '';
+                cat.subcategories.forEach(sub => {
+                    subsHtml += `
+                        <div onclick="app.selectCategory('${cat.id}', '${sub.id}')" class="flex items-center justify-between p-3 pr-16 hover:bg-navy-800/50 rounded-lg cursor-pointer transition border-b border-navy-800/50 last:border-0 relative">
+                             <!-- Dashed line visual -->
+                             <div class="absolute right-8 top-0 bottom-0 border-r border-dashed border-navy-700 w-px h-full"></div>
+                             <div class="absolute right-8 top-1/2 -translate-y-1/2 w-3 h-px bg-navy-700"></div>
+
+                             <div class="flex items-center gap-3">
+                                 <span class="text-gray-200 text-sm font-medium">${sub.name}</span>
+                             </div>
+                             ${sub.icon ? `<i class="fa-solid ${sub.icon} text-gray-500 text-xs"></i>` : ''}
+                        </div>
+                    `;
+                });
+
+                list.innerHTML += `
+                    <div id="subs-${cat.id}" class="hidden space-y-1 mb-2 bg-navy-900/20 rounded-b-xl -mt-2 pb-2">
+                        ${subsHtml}
+                    </div>
+                `;
+            }
         });
     },
 
-    selectCategory(id) {
-        const cat = CATEGORIES.find(c => c.id === id);
+    toggleSubcategories(catId) {
+        const el = document.getElementById(`subs-${catId}`);
+        const arrow = document.getElementById(`arrow-${catId}`);
+        if (el) {
+            el.classList.toggle('hidden');
+            if (arrow) arrow.classList.toggle('-rotate-90');
+        }
+    },
+
+    selectCategory(catId, subId = null) {
+        const cat = CATEGORIES.find(c => c.id === catId);
         if (!cat) return;
 
+        let displayName = cat.name;
+        let displayIcon = cat.icon;
+
+        if (subId && cat.subcategories) {
+            const sub = cat.subcategories.find(s => s.id === subId);
+            if (sub) {
+                displayName = `${cat.name} - ${sub.name}`;
+                if (sub.icon) displayIcon = sub.icon;
+            }
+        }
+
         // Update Transaction Modal UI
-        document.getElementById('tx-category-id').value = cat.id;
-        document.getElementById('tx-category-name').innerText = cat.name;
+        document.getElementById('tx-category-id').value = catId; // Maintaining Parent for now
+        document.getElementById('tx-category-name').innerText = displayName;
 
         const iconContainer = document.getElementById('tx-category-icon-bg');
         iconContainer.className = `w-8 h-8 rounded-full ${cat.bg} flex items-center justify-center shrink-0`;
 
         const icon = document.getElementById('tx-category-icon');
-        icon.className = `fa-solid ${cat.icon} ${cat.color}`;
+        icon.className = `fa-solid ${displayIcon} ${cat.color}`;
 
         this.closeModal('modal-categories');
+    },
+
+    addCategory() {
+        const name = prompt('أدخل اسم القسم الجديد:');
+        if (name) {
+            alert('خاصية إضافة الأقسام قيد التطوير حالياً، ولكن سيتم إضافتها قريباً!');
+        }
     },
 
     toggleTxCurrency() {
