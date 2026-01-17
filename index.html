@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Masarif Pro | مصاريف برو</title>
+    <meta name="description" content="A professional personal finance tracker">
+    <meta name="theme-color" content="#111827">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        navy: {
+                            950: '#0f121a', // Darker BG
+                            900: '#151922', // Main background
+                            800: '#1e2330', // Cards
+                            700: '#2a3040', // Borders/Inputs
+                        },
+                        emerald: {
+                            500: '#10b981', // Income/Positive
+                            600: '#059669'
+                        },
+                        rose: {
+                            500: '#ef4444', // Expense/Negative
+                            600: '#dc2626'
+                        },
+                        // Custom priority colors
+                        priority: {
+                            essential: '#10b981', // Green
+                            normal: '#eab308', // Yellow
+                            luxury: '#ef4444' // Red
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="h-screen w-screen overflow-hidden flex flex-col relative select-none">
+
+    <!-- HEADER -->
+    <header class="px-4 py-3 bg-navy-950 z-20 shrink-0 flex justify-between items-center border-b border-navy-800/30">
+        <!-- Left: Filter -->
+        <button class="w-10 h-10 flex items-center justify-center text-gray-400">
+            <i class="fa-solid fa-bars-staggered text-xl"></i>
+        </button>
+
+        <!-- Center: Title Dropdown -->
+        <div onclick="app.toggleCurrency()" class="flex flex-col items-center cursor-pointer">
+            <h1 class="font-bold text-lg flex items-center gap-2 text-white">
+                <span id="header-currency-text">الدينار العراقي</span>
+                <i class="fa-solid fa-caret-down text-xs text-gray-400"></i>
+            </h1>
+        </div>
+
+        <!-- Right: Icons -->
+        <div class="flex gap-1">
+            <button class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white">
+                <i class="fa-solid fa-floppy-disk text-xl"></i>
+            </button>
+            <button onclick="app.openSettings()"
+                class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white">
+                <i class="fa-solid fa-gear text-xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-container" class="flex-1 overflow-y-auto no-scrollbar pb-24 relative bg-navy-950">
+
+        <!-- === HOME PAGE === -->
+        <section id="page-home" class="flex flex-col">
+
+            <!-- Top Tabs -->
+            <div class="flex border-b border-navy-800 bg-navy-950 sticky top-0 z-20">
+                <button onclick="app.switchHomeTab('stats')"
+                    class="top-tab flex-1 py-3 text-sm font-bold text-gray-500 transition-colors"
+                    id="tab-stats">الإحصائيات</button>
+                <button onclick="app.switchHomeTab('tx')"
+                    class="top-tab flex-1 py-3 text-sm font-bold text-gray-500 transition-colors"
+                    id="tab-tx">المعاملات</button>
+                <button onclick="app.switchHomeTab('models')"
+                    class="top-tab flex-1 py-3 text-sm font-bold text-gray-500 transition-colors"
+                    id="tab-models">النماذج</button>
+            </div>
+
+            <!-- TAB 1: STATISTICS (Detailed Scroll View) -->
+            <div id="view-stats" class="p-4 space-y-4 hidden pb-32">
+                <!-- Balance Card -->
+                <div class="bg-navy-900 rounded-2xl p-5 border border-navy-800 relative">
+                    <i class="fa-regular fa-circle-question absolute top-4 right-4 text-gray-500"></i>
+                    <div class="flex flex-row-reverse justify-between items-center">
+
+                        <!-- Left: Chart -->
+                        <div class="chart-container-donut">
+                            <canvas id="balanceDonutChart"></canvas>
+                            <!-- Center Text -->
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <span class="text-xs text-gray-500 font-bold" id="donut-pct">100%</span>
+                            </div>
+                        </div>
+
+                        <!-- Right: List -->
+                        <div class="flex-1 text-right space-y-2 pl-4">
+                            <div>
+                                <p class="text-xs text-gray-400">الرصيد الابتدائي</p>
+                                <p class="font-bold text-white dir-ltr">0</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">المصاريف</p>
+                                <p class="font-bold text-rose-500 dir-ltr" id="stats-total-expense">0</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">إجمالي الدخل</p>
+                                <p class="font-bold text-emerald-500 dir-ltr" id="stats-total-income">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 border border-navy-700/50 rounded-lg p-2 text-center">
+                        <span class="text-gray-300 font-bold text-sm">المصاريف</span>
+                    </div>
+                </div>
+
+                <div class="text-center py-2">
+                    <a href="#" class="text-blue-400 text-sm font-bold">جميع المعاملات</a>
+                </div>
+
+                <!-- Priorities Section -->
+                <div class="bg-navy-900 rounded-2xl p-5 border border-navy-800">
+                    <h3 class="text-white font-bold mb-1 text-right">الأولويات</h3>
+                    <p class="text-xs text-gray-500 mb-4 text-right">تمييز أهمية المعاملات بناءً على مدى الإحتياج لها
+                    </p>
+
+                    <div class="space-y-4">
+                        <!-- Essential -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-regular fa-face-smile text-3xl text-emerald-500"></i>
+                                <span class="text-white font-bold">أساسي</span>
+                            </div>
+                            <span class="text-rose-500 dir-ltr font-bold" id="prio-essential-val">0</span>
+                        </div>
+                        <!-- Normal -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-regular fa-face-meh text-3xl text-yellow-500"></i>
+                                <span class="text-white font-bold">عادي</span>
+                            </div>
+                            <span class="text-rose-500 dir-ltr font-bold" id="prio-normal-val">0</span>
+                        </div>
+                        <!-- Luxury -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-regular fa-face-frown text-3xl text-rose-500"></i>
+                                <span class="text-white font-bold">ترفيهي</span>
+                            </div>
+                            <span class="text-rose-500 dir-ltr font-bold" id="prio-luxury-val">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weekly Chart Section (NEW) -->
+                <div class="bg-navy-900 rounded-2xl p-5 border border-navy-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-white font-bold">الأسبوع الحالي</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-500 text-xs">عرض الدخل</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer">
+                                <div
+                                    class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-emerald-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all">
+                                </div>
+                            </label>
+                            <div class="text-left">
+                                <span class="text-emerald-500 text-xs block dir-ltr">0</span>
+                                <span class="text-rose-500 text-xs block dir-ltr">-39,480,000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container-bar">
+                        <canvas id="weeklyBarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Spending Categories (Detailed as updated) -->
+                <div class="bg-navy-900 rounded-2xl p-5 border border-navy-800">
+                    <h3 class="text-white font-bold mb-1 text-right">بنود الصرف</h3>
+                    <p class="text-xs text-gray-500 mb-4 text-right">أعلى الأقسام إنفاقاً</p>
+                    <div id="stats-categories-list" class="space-y-4"></div>
+                    <div class="text-center mt-4">
+                        <button class="text-blue-500 text-sm font-bold">المزيد من التفاصيل</button>
+                    </div>
+                </div>
+
+                <!-- Averages Cards (NEW) -->
+                <div class="bg-navy-900 rounded-2xl p-5 border border-navy-800">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-white font-bold text-lg">المعدل اليومي</h3>
+                        <div class="text-left">
+                            <span class="text-emerald-500 text-sm block dir-ltr">0</span>
+                            <span class="text-rose-500 text-lg font-bold block dir-ltr"
+                                id="stats-daily-avg">-39,480,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-navy-900 rounded-2xl p-5 border border-navy-800">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-white font-bold text-lg">المعدل الشهري</h3>
+                        <div class="text-left">
+                            <span class="text-emerald-500 text-sm block dir-ltr">0</span>
+                            <span class="text-rose-500 text-lg font-bold block dir-ltr"
+                                id="stats-monthly-avg">-39,480,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Report Placeholder -->
+                <div class="bg-navy-900 rounded-2xl p-5 border border-navy-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-white font-bold">التقرير الشهري</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-500 text-xs">عرض الدخل</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer">
+                                <div
+                                    class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-emerald-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all">
+                                </div>
+                            </label>
+                            <div class="text-left">
+                                <span class="text-emerald-500 text-xs block dir-ltr">0</span>
+                                <span class="text-rose-500 text-xs block dir-ltr">-39,480,000</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-32 border-l border-b border-gray-700 relative">
+                        <div class="absolute bottom-0 left-0 p-1 text-xs text-gray-500">01/2026</div>
+                        <div class="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-rose-500"></div>
+                    </div>
+                    <div class="flex justify-center mt-2 gap-4 text-xs">
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-1 bg-rose-500"></div><span>المصاريف</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB 2: TRANSACTIONS -->
+            <!-- TAB 2: TRANSACTIONS (New Design) -->
+            <div id="view-tx" class="p-4 flex-1 pb-32 hidden flex flex-col">
+
+                <!-- Date Slider -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar mb-6 pb-2" id="tx-date-slider">
+                    <!-- Dynamic -->
+                </div>
+
+                <!-- Current Balance Big -->
+                <div class="text-center py-4 mb-4">
+                    <p class="text-sm text-gray-400 mb-2">الرصيد الحالي</p>
+                    <h2
+                        class="text-4xl font-bold text-white tracking-tight flex items-center justify-center gap-2 dir-ltr">
+                        <span class="text-sm text-gray-400">IQD</span>
+                        <span id="tx-total-balance">0</span>
+                    </h2>
+                </div>
+
+                <!-- Transactions List -->
+                <div id="transactions-list-container" class="space-y-4">
+                    <!-- Dynamic -->
+                </div>
+
+                <!-- Bottom Filter Button -->
+                <div class="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 hidden" id="bottom-filter-container">
+                    <button class="cat-filter-btn">
+                        <i class="fa-solid fa-caret-down"></i>
+                        <span>الكل</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 3: MODELS -->
+            <div id="view-models" class="p-4 flex-1 hidden flex flex-col items-center justify-center text-center pb-20">
+                <p class="text-gray-400 text-lg font-bold mb-2">النماذج هي معاملات جاهزة للإضافة</p>
+                <p class="text-gray-500 text-sm mb-8">بشكل أسرع</p>
+
+                <button class="bg-[#006070] text-white font-bold py-3 px-12 rounded-full shadow-lg">
+                    إضافة نموذج
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Placeholders for other nav pages -->
+        <section id="page-budget" class="hidden p-10 text-center">
+            <p class="text-gray-500">صفحة الميزانية</p>
+        </section>
+        <section id="page-wallets" class="hidden p-10 text-center">
+            <p class="text-gray-500">صفحة المحافظ</p>
+        </section>
+        <section id="page-more" class="hidden p-10 text-center">
+            <p class="text-gray-500">صفحة المزيد</p>
+        </section>
+
+    </main>
+
+    <!-- FLOATING ACTION BUTTON (Fixed Position) -->
+    <div class="fab-container">
+        <button onclick="app.openTransactionModal()" class="fab-button">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav id="bottom-nav"
+        class="bg-navy-950 border-t border-navy-900 pb-safe pt-2 px-2 flex justify-between items-end z-50 fixed bottom-0 left-0 right-0 h-[70px] text-[10px] font-medium text-gray-500">
+        <button onclick="app.navTo('home')"
+            class="nav-item active flex flex-col items-center gap-1.5 w-1/5 pb-2 transition-colors">
+            <i class="fa-solid fa-house text-xl"></i>
+            <span>الرئيسية</span>
+        </button>
+        <button onclick="app.navTo('budget')"
+            class="nav-item flex flex-col items-center gap-1.5 w-1/5 pb-2 transition-colors">
+            <i class="fa-solid fa-chart-pie text-xl"></i>
+            <span>الميزانية</span>
+        </button>
+        <!-- Spacer for FAB -->
+        <div class="w-1/5"></div>
+        <button onclick="app.navTo('wallets')"
+            class="nav-item flex flex-col items-center gap-1.5 w-1/5 pb-2 transition-colors">
+            <i class="fa-solid fa-wallet text-xl"></i>
+            <span>المحافظ</span>
+        </button>
+        <button onclick="app.navTo('more')"
+            class="nav-item flex flex-col items-center gap-1.5 w-1/5 pb-2 transition-colors">
+            <i class="fa-solid fa-ellipsis text-xl"></i>
+            <span>المزيد</span>
+        </button>
+    </nav>
+
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- SETTINGS MODAL -->
+    <div id="modal-settings" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="app.closeModal('modal-settings')"></div>
+        <div
+            class="absolute bottom-0 left-0 right-0 bg-navy-900 rounded-t-3xl p-0 modal-enter-active border-t border-navy-800 pb-10">
+            <!-- Modal Header handled inside content or just simple list -->
+            <div class="p-4">
+                <div class="w-12 h-1 bg-navy-700 rounded-full mx-auto mb-6"></div>
+
+                <div class="space-y-1">
+                    <!-- Item -->
+                    <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-regular fa-calendar text-gray-400 text-xl"></i>
+                            <span class="text-white">أول يوم بالشهر</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-400">
+                            <span>1</span>
+                            <i class="fa-solid fa-caret-down text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Item -->
+                    <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-regular fa-calendar-check text-gray-400 text-xl"></i>
+                            <span class="text-white">أول يوم بالإسبوع</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-400">
+                            <span>الاحد</span>
+                            <i class="fa-solid fa-caret-down text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Item -->
+                    <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
+                        <div class="flex items-center gap-4">
+                            <div class="w-5 h-5 bg-emerald-500 rounded flex items-center justify-center"><i
+                                    class="fa-solid fa-wallet text-[10px] text-white"></i></div>
+                            <span class="text-white">المعاملات الرئيسية</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-400">
+                            <span>الكل</span>
+                            <i class="fa-solid fa-caret-down text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Item -->
+                    <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
+                        <div class="flex items-center gap-4">
+                            <span
+                                class="bg-blue-600 text-white text-[10px] rounded px-1 min-w-[30px] text-center">1.23</span>
+                            <span class="text-white">العلامة العشرية</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-gray-400">
+                            <span>بدون علامة..</span>
+                            <i class="fa-solid fa-caret-down text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Toggle Item -->
+                    <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-6 h-6 rounded-full bg-rose-400 flex items-center justify-center text-white text-xs">
+                                <i class="fa-solid fa-receipt"></i></div>
+                            <span class="text-white">استثناء الديون</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-navy-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
+                            </div>
+                        </label>
+                    </div>
+                    <!-- Toggle Item -->
+                    <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-solid fa-wallet text-gray-200 text-xl"></i>
+                            <span class="text-white">الرصيد الحالي</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" checked class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-navy-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
+                            </div>
+                        </label>
+                    </div>
+                    <!-- Toggle Item -->
+                    <div class="flex justify-between items-center py-4 border-b border-navy-800 px-2">
+                        <div class="flex items-center gap-4">
+                            <i class="fa-regular fa-face-smile text-gray-200 text-xl"></i>
+                            <span class="text-white">عرض أولويات الإحصائيات فقط</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" checked class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-navy-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600">
+                            </div>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD TRANSACTION MODAL -->
+    <div id="modal-transaction" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="app.closeModal('modal-transaction')"></div>
+        <div
+            class="absolute bottom-0 left-0 right-0 bg-navy-900 rounded-t-3xl p-0 modal-enter-active border-t border-navy-800 h-[85vh] flex flex-col">
+
+            <!-- Header -->
+            <div class="flex justify-between items-center p-4 border-b border-navy-800">
+                <button onclick="app.closeModal('modal-transaction')" class="text-white text-xl"><i
+                        class="fa-solid fa-arrow-right"></i></button>
+                <div class="flex gap-4">
+                    <button class="text-gray-400"><i class="fa-solid fa-trash"></i></button>
+                    <button class="text-gray-400"><i class="fa-solid fa-repeat"></i></button>
+                    <button class="text-gray-400"><i class="fa-solid fa-chart-line"></i></button>
+                </div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" placeholder="بحث"
+                        class="w-full bg-navy-950 rounded-lg p-3 text-right text-gray-400 border border-navy-800 text-sm focus:outline-none focus:border-emerald-500">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-500"></i>
+                </div>
+
+                <!-- Colors / Type -->
+                <div class="flex justify-end gap-2">
+                    <!-- Could indicate expense/income here, keeping simple per image -->
+                </div>
+
+                <!-- Amount Input Row -->
+                <div class="flex gap-3">
+                    <button
+                        class="w-14 h-14 bg-navy-800 rounded-lg border border-navy-700 text-emerald-500 font-bold text-xl flex items-center justify-center flex-col shadow">
+                        <span class="text-[10px] text-gray-400 -mb-1">IQD</span>
+                        <span>$</span>
+                    </button>
+                    <div class="flex-1 relative">
+                        <label class="absolute -top-3 right-2 text-gray-500 text-xs bg-navy-900 px-1">المبلغ</label>
+                        <input type="number" id="tx-amount"
+                            class="w-full h-14 bg-navy-950 border-b border-gray-600 text-right text-2xl font-bold text-white focus:outline-none focus:border-emerald-500 px-2"
+                            placeholder="0">
+                    </div>
+                    <button
+                        class="w-14 h-14 bg-emerald-500/20 rounded-lg border border-emerald-500/50 text-emerald-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-calculator"></i>
+                    </button>
+                </div>
+
+                <!-- Selectors -->
+                <div class="space-y-4">
+                    <!-- Category -->
+                    <div class="flex items-center justify-between py-2 border-b border-navy-800"
+                        onclick="document.getElementById('tx-category').focus()">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-rose-200 flex items-center justify-center"><i
+                                    class="fa-solid fa-user-doctor text-rose-500"></i></div>
+                            <select id="tx-category"
+                                class="bg-transparent text-white text-lg font-bold outline-none appearance-none pr-8 text-right w-full">
+                                <!-- JS Populated -->
+                            </select>
+                        </div>
+                        <i class="fa-solid fa-caret-down text-gray-500"></i>
+                    </div>
+
+                    <!-- Wallet -->
+                    <div class="flex items-center justify-between py-2 border-b border-navy-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center"><i
+                                    class="fa-solid fa-credit-card text-navy-900"></i></div>
+                            <div class="text-right">
+                                <p class="text-white font-bold">حساب بنكي</p>
+                                <p class="text-gray-400 text-xs dir-ltr">-28,000 $</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-caret-down text-gray-500"></i>
+                        <!-- Hidden Select for logic -->
+                        <select id="tx-wallet" class="hidden"></select>
+                    </div>
+
+                    <!-- Note -->
+                    <div class="flex items-center gap-3 border-b border-navy-800 py-2">
+                        <i class="fa-solid fa-bars text-gray-500 text-xl"></i>
+                        <input type="text" id="tx-note" placeholder="الملاحظات"
+                            class="bg-transparent text-white w-full text-right outline-none">
+                    </div>
+                </div>
+
+                <!-- Attachment Buttons -->
+                <div class="grid grid-cols-2 gap-0 border border-navy-700/50 rounded-lg overflow-hidden">
+                    <button class="py-4 bg-navy-950 hover:bg-navy-800 text-gray-400 border-l border-navy-700/50"><i
+                            class="fa-solid fa-camera"></i></button>
+                    <button class="py-4 bg-navy-950 hover:bg-navy-800 text-gray-400"><i
+                            class="fa-regular fa-image"></i></button>
+                </div>
+
+                <!-- Priority (Matches Image 7 Bottom) -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-white">الأولويـة</h3>
+                        <i class="fa-solid fa-circle-question text-gray-500"></i>
+                    </div>
+                    <div class="flex gap-3">
+                        <!-- Essential -->
+                        <label class="cursor-pointer flex-1">
+                            <input type="radio" name="tx-priority" value="essential" class="peer hidden" checked>
+                            <div
+                                class="flex flex-col items-center justify-center p-3 rounded-lg bg-emerald-700/20 border border-transparent peer-checked:bg-emerald-600 peer-checked:text-white text-gray-400 h-24 transition">
+                                <i class="fa-regular fa-face-smile text-3xl mb-2"></i>
+                                <span class="font-bold text-sm">أساسي</span>
+                            </div>
+                        </label>
+                        <!-- Normal -->
+                        <label class="cursor-pointer flex-1">
+                            <input type="radio" name="tx-priority" value="normal" class="peer hidden">
+                            <div
+                                class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-800 border border-transparent peer-checked:bg-yellow-600 peer-checked:text-white text-gray-400 h-24 transition">
+                                <i class="fa-regular fa-face-meh text-3xl mb-2"></i>
+                                <span class="font-bold text-sm">عادي</span>
+                            </div>
+                        </label>
+                        <!-- Luxury -->
+                        <label class="cursor-pointer flex-1">
+                            <input type="radio" name="tx-priority" value="luxury" class="peer hidden">
+                            <div
+                                class="flex flex-col items-center justify-center p-3 rounded-lg bg-navy-800 border border-transparent peer-checked:bg-rose-600 peer-checked:text-white text-gray-400 h-24 transition">
+                                <i class="fa-regular fa-face-frown text-3xl mb-2"></i>
+                                <span class="font-bold text-sm">ترفيهي</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Checkbox Bottom -->
+                <div class="flex items-center justify-between text-xs text-gray-400 mt-2">
+                    <div class="text-right">
+                        <p class="text-white font-bold">عدم التأثير على الرصيد</p>
+                        <p>عند تفعيلها سيتم تجاهل هذه المعاملة من رصيد..</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer">
+                        <div
+                            class="w-10 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500">
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Footer Button -->
+            <div class="p-4 bg-navy-950 border-t border-navy-800">
+                <button onclick="app.saveTransaction()"
+                    class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-lg shadow-lg text-lg">
+                    إضافة نموذج
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+
+</html>

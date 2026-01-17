@@ -1,0 +1,126 @@
+/* Base High-Fidelity Styles from Masarif Pro */
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #0f121a;
+    color: #e5e7eb;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.page-transition {
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Navigation */
+.nav-item.active {
+    color: #f3f4f6;
+}
+
+.nav-item.active i {
+    color: #f3f4f6;
+}
+
+/* Top Tabs */
+.top-tab.active {
+    border-bottom: 2px solid #f3f4f6;
+    color: #f3f4f6;
+}
+
+/* Floating Button Position Fix */
+.fab-container {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+}
+
+.fab-button {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    font-size: 24px;
+    color: white;
+    transition: transform 0.2s;
+}
+
+.fab-button:active {
+    transform: scale(0.95);
+}
+
+/* Chart Containers */
+.chart-container-donut {
+    width: 8rem;
+    height: 8rem;
+    position: relative;
+}
+
+.chart-container-bar {
+    position: relative;
+    height: 180px;
+    width: 100%;
+}
+
+/* Date Slider Cards */
+#tx-date-slider {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 15px;
+    /* Space for scroll */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.date-card {
+    min-width: 130px;
+    /* Slightly wider */
+    height: 90px;
+    background-color: #151922;
+    /* navy-900 */
+    border: 1px solid #1e2330;
+    /* navy-800 */
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.2s;
+    cursor: pointer;
+    flex-shrink: 0;
+    scroll-snap-align: center;
+}
+
+.date-card.active {
+    border: 2px solid #f3f4f6;
+    background-color: #1e2330;
+    transform: scale(1.02);
+}
+
+/* Category Filter Button (Bottom Pink) */
+.cat-filter-btn {
+    background-color: #be123c;
+    /* Rose-700 */
+    color: white;
+    padding: 12px 32px;
+    border-radius: 9999px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(190, 18, 60, 0.3);
+}
